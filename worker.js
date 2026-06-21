@@ -52,7 +52,9 @@ async function handleOrdersApi(request, env) {
       items: body.items,
       notes: body.notes || "",
       total: body.total || 0,
-      status: "new",
+      status: "new",       // new -> cooking -> served（調理の進み具合）
+      paid: false,         // 会計は調理状況とは独立して管理
+      servedAt: null,      // 提供完了になった時刻（提供までの時間の計測用）
       archived: false,
       createdAt: Date.now(),
     };
@@ -61,7 +63,7 @@ async function handleOrdersApi(request, env) {
     return json(order);
   }
 
-  // PATCH /api/orders -> ステータス更新・アーカイブ
+  // PATCH /api/orders -> ステータス更新・会計・アーカイブ（互いに独立して更新可能）
   if (request.method === "PATCH") {
     let body;
     try {
@@ -77,7 +79,13 @@ async function handleOrdersApi(request, env) {
     if (!order) {
       return json({ error: "not found" }, 404);
     }
-    if (body.status) order.status = body.status;
+    if (body.status) {
+      order.status = body.status;
+      if (body.status === "served" && !order.servedAt) {
+        order.servedAt = Date.now();
+      }
+    }
+    if (typeof body.paid === "boolean") order.paid = body.paid;
     if (typeof body.archived === "boolean") order.archived = body.archived;
     await saveState(env, state);
     return json(order);
