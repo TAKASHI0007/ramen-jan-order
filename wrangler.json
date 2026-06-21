@@ -1,0 +1,12 @@
+{
+  "name": "ramen-jan-order",
+  "main": "worker.js",
+  "compatibility_date": "2026-06-21",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "kv_namespaces": [
+    { "binding": "ORDERS_KV", "id": "788ab4c10ba747a99f8ae88adb2b6dfb" }
+  ]
+}
