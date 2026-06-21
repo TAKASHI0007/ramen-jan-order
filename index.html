@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ラーメンじゃん QRオーダー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFEAD8;
+    --paper-card:#F8F5EA;
+    --paper-deep:#E3DCC6;
+    --ink:#2B2A26;
+    --ink-soft:#736C58;
+    --stamp-red:#A8392B;
+    --herb:#4F6F52;
+    --brass:#B8863B;
+    --line:#C9C0A4;
+    --font-display:'Courier Prime', monospace;
+    --font-body:'Work Sans', sans-serif;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  button:focus-visible, [tabindex]:focus-visible, textarea:focus-visible, input:focus-visible{
+    outline:3px solid var(--stamp-red);
+    outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+
+  header.topbar{ padding:18px 18px 0 18px; }
+  .eyebrow{
+    font-family:var(--font-display);
+    font-size:11px;
+    letter-spacing:0.22em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  .shopname{
+    font-family:var(--font-display);
+    font-size:26px;
+    font-weight:700;
+    margin:2px 0 0 0;
+    letter-spacing:0.02em;
+  }
+  .city-tag{font-size:11px;color:var(--ink-soft);margin:2px 0 10px 0;}
+  .lang-switch{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .lang-btn{
+    background:none;border:1.5px solid var(--line);border-radius:7px;
+    padding:5px 10px;font-size:11.5px;color:var(--ink-soft);font-family:var(--font-display);
+  }
+  .lang-btn.active{background:var(--ink);color:var(--paper-card);border-color:var(--ink);}
+
+  main{flex:1;padding:14px 18px 110px 18px;}
+
+  .section-title{
+    font-family:var(--font-display);
+    font-size:13px;
+    letter-spacing:0.1em;
+    color:var(--ink-soft);
+    margin:18px 0 10px 0;
+    text-transform:uppercase;
+  }
+  .seat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .seat-btn{
+    background:var(--paper-card);
+    border:1.5px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 6px;
+    text-align:center;
+    font-family:var(--font-display);
+    font-size:13px;
+    color:var(--ink);
+  }
+  .seat-btn:active{background:var(--paper-deep);}
+  .seat-btn .seat-sub{display:block;font-family:var(--font-body);font-size:10px;color:var(--ink-soft);margin-top:4px;}
+
+  .cat-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:4px;-webkit-overflow-scrolling:touch;}
+  .cat-tabs::-webkit-scrollbar{display:none;}
+  .cat-tab{
+    flex:0 0 auto;
+    background:transparent;
+    border:1.5px solid var(--ink);
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+    color:var(--ink);
+  }
+  .cat-tab.active{background:var(--ink);color:var(--paper-card);}
+
+  .menu-item{padding:14px 0;border-bottom:1px dashed var(--line);}
+  .menu-item-row{display:flex;align-items:baseline;gap:6px;}
+  .menu-item-name{font-weight:600;font-size:15px;}
+  .leader{flex:1;border-bottom:2px dotted var(--line);height:0;transform:translateY(-3px);}
+  .menu-item-price{font-family:var(--font-display);font-size:14px;color:var(--ink);white-space:nowrap;}
+  .menu-item-desc{font-size:12.5px;color:var(--ink-soft);margin-top:3px;line-height:1.45;}
+  .menu-item-note{font-size:11.5px;color:var(--brass);margin-top:5px;line-height:1.5;}
+  .qty-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;}
+  .qty-stepper{display:flex;align-items:center;gap:0;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden;}
+  .qty-stepper button{
+    background:var(--paper-card);
+    border:none;
+    width:34px;height:32px;
+    font-size:16px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .qty-stepper button:active{background:var(--paper-deep);}
+  .qty-stepper .qty-val{width:30px;text-align:center;font-family:var(--font-display);font-size:14px;}
+  .qty-stepper.small button{width:26px;height:26px;font-size:13px;}
+  .qty-stepper.small .qty-val{width:22px;font-size:12px;}
+  .add-btn{
+    background:var(--ink);
+    color:var(--paper-card);
+    border:none;
+    border-radius:8px;
+    padding:8px 16px;
+    font-size:13px;
+    font-weight:600;
+  }
+  .add-btn.small{padding:6px 12px;font-size:12px;}
+
+  .variant-list{margin-top:10px;}
+  .variant-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px dashed var(--line);}
+  .variant-label{font-size:13px;font-weight:600;flex:1;}
+  .variant-price{font-family:var(--font-display);font-size:12.5px;color:var(--ink-soft);white-space:nowrap;}
+
+  .config-group{margin-top:13px;}
+  .config-label{font-size:10.5px;color:var(--ink-soft);letter-spacing:0.06em;margin-bottom:6px;text-transform:uppercase;font-family:var(--font-display);}
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12.5px;color:var(--ink);}
+  .pill.active{background:var(--ink);color:var(--paper-card);border-color:var(--ink);}
+  .config-hint{font-size:11px;color:var(--stamp-red);margin-top:7px;line-height:1.5;}
+  .added-lines{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);}
+  .added-line{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;}
+  .added-line .al-desc{font-size:12px;color:var(--ink-soft);}
+
+  .cart-bar{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    max-width:480px;margin:0 auto;
+    background:var(--ink);
+    color:var(--paper-card);
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-radius:14px 14px 0 0;
+    box-shadow:0 -4px 18px rgba(0,0,0,0.25);
+  }
+  .cart-bar .cart-info{font-family:var(--font-display);font-size:13.5px;}
+  .cart-bar button{
+    background:var(--stamp-red);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:10px 18px;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.03em;
+  }
+
+  .sheet-overlay{
+    position:fixed;inset:0;
+    background:rgba(20,18,14,0.45);
+    display:flex;align-items:flex-end;justify-content:center;
+    z-index:50;
+  }
+  .sheet{
+    background:var(--paper-card);
+    width:100%;max-width:480px;
+    border-radius:16px 16px 0 0;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:20px 18px 24px 18px;
+  }
+  .sheet-handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 16px auto;}
+  .sheet h2{font-family:var(--font-display);font-size:17px;margin:0 0 14px 0;}
+  .review-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);}
+  .review-row .ri-name{font-size:14px;font-weight:600;}
+  .review-row .ri-meta{font-size:11.5px;color:var(--ink-soft);}
+  .review-row .ri-price{font-family:var(--font-display);font-size:13px;}
+  .notes-input{
+    width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px;
+    font-family:var(--font-body);font-size:13px;margin-top:14px;min-height:60px;
+    resize:vertical;background:var(--paper);color:var(--ink);
+  }
+  .total-row{display:flex;justify-content:space-between;align-items:baseline;padding:16px 0 4px 0;font-family:var(--font-display);}
+  .total-row .label{font-size:13px;color:var(--ink-soft);}
+  .total-row .value{font-size:22px;font-weight:700;}
+  .submit-btn{
+    width:100%;
+    background:var(--stamp-red);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:15px;
+    font-size:15px;
+    font-weight:700;
+    margin-top:14px;
+    letter-spacing:0.02em;
+  }
+  .close-sheet{
+    width:100%;background:none;border:1.5px solid var(--line);border-radius:10px;
+    padding:11px;margin-top:8px;font-size:13px;color:var(--ink-soft);
+  }
+  .remove-x{background:none;border:none;color:var(--stamp-red);font-size:18px;line-height:1;padding:4px 6px;}
+
+  .confirm-wrap{padding-top:30px;text-align:center;}
+  .ticket-card{
+    background:var(--paper-card);
+    border:1.5px solid var(--ink);
+    border-radius:var(--radius);
+    padding:26px 20px 20px 20px;
+    position:relative;
+    margin-bottom:20px;
+  }
+  .ticket-number{font-family:var(--font-display);font-size:42px;font-weight:700;letter-spacing:0.04em;}
+  .ticket-table{font-size:13px;color:var(--ink-soft);margin-top:4px;}
+  .stamp{
+    display:inline-block;
+    border:3px solid currentColor;
+    border-radius:5px;
+    padding:4px 14px;
+    transform:rotate(-3deg);
+    font-family:var(--font-display);
+    letter-spacing:0.1em;
+    font-weight:700;
+    font-size:13px;
+    mix-blend-mode:multiply;
+    margin-top:16px;
+  }
+  .stamp.s-new{color:var(--stamp-red);}
+  .stamp.s-cooking{color:var(--brass);}
+  .stamp.s-served{color:var(--herb);}
+  .perforation{
+    position:absolute;left:0;right:0;bottom:-1px;height:14px;
+    background-image:radial-gradient(circle, var(--paper) 6px, transparent 7px);
+    background-size:18px 18px;
+    background-position:9px 0;
+  }
+  .help-text{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
+  .secondary-btn{
+    background:var(--ink);color:var(--paper-card);border:none;border-radius:10px;
+    padding:13px 20px;font-size:14px;font-weight:600;
+  }
+  .pay-note{font-size:11.5px;color:var(--ink-soft);margin-top:22px;}
+
+  .staff-summary{display:flex;gap:8px;margin-bottom:16px;}
+  .chip{
+    flex:1;background:var(--paper-card);border:1.5px solid var(--line);border-radius:8px;
+    padding:8px 6px;text-align:center;
+  }
+  .chip .chip-n{font-family:var(--font-display);font-size:18px;font-weight:700;}
+  .chip .chip-l{font-size:10.5px;color:var(--ink-soft);letter-spacing:0.04em;}
+  .order-ticket{
+    background:var(--paper-card);
+    border:1.5px solid var(--ink);
+    border-radius:var(--radius);
+    margin-bottom:18px;
+    padding:14px 16px 18px 16px;
+    position:relative;
+  }
+  .order-ticket .ot-head{display:flex;justify-content:space-between;align-items:flex-start;}
+  .ot-num{font-family:var(--font-display);font-size:20px;font-weight:700;}
+  .ot-table{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .ot-elapsed{font-family:var(--font-display);font-size:12px;color:var(--ink-soft);}
+  .ot-stamps{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .ot-items{margin:10px 0;padding-top:8px;border-top:1px dashed var(--line);}
+  .ot-item-row{display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0;gap:6px;}
+  .ot-item-row .it-qty{font-family:var(--font-display);color:var(--ink-soft);width:28px;flex:0 0 auto;}
+  .ot-item-row .it-desc{flex:1;}
+  .ot-notes{font-size:12px;color:var(--stamp-red);margin-top:8px;background:#F6EAE6;padding:7px 9px;border-radius:7px;line-height:1.5;}
+  .ot-actions{display:flex;gap:8px;align-items:center;margin-top:10px;}
+  .ot-actions .advance-btn{
+    flex:1;background:var(--ink);color:var(--paper-card);border:none;border-radius:8px;
+    padding:11px;font-size:13px;font-weight:700;
+  }
+  .ot-actions .advance-btn.ready{background:var(--herb);}
+  .ot-actions .advance-btn.pay-due{background:var(--brass);}
+  .ot-actions .advance-btn.outline{background:none;border:1.5px solid var(--line);color:var(--ink-soft);}
+  .ot-actions .cancel-btn{
+    background:none;border:1.5px solid var(--line);color:var(--ink-soft);border-radius:8px;
+    padding:11px 12px;font-size:12px;
+  }
+  .empty-state{
+    text-align:center;padding:50px 10px;color:var(--ink-soft);font-size:13.5px;line-height:1.7;
+  }
+  .staff-tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .ghost-btn{background:none;border:none;color:var(--ink-soft);font-size:12px;text-decoration:underline;padding:6px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   設定（実店舗導入時はここを編集）
+   ========================================================= */
+const CONFIG = {
+  shopName: {ja:"ラーメンじゃん", en:"Ramen Jan", ru:"Рамен Джан", hy:"Ռամեն ջան"},
+  city: {ja:"エレバン", en:"Yerevan", ru:"Ереван", hy:"Երևան"},
+  currency: "AMD",
+  seats: [
+    {id:"counter-1", label:{ja:"カウンター1",en:"Counter 1",ru:"Стойка 1",hy:"Բար 1"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"counter-2", label:{ja:"カウンター2",en:"Counter 2",ru:"Стойка 2",hy:"Բար 2"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"counter-3", label:{ja:"カウンター3",en:"Counter 3",ru:"Стойка 3",hy:"Բար 3"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"counter-4", label:{ja:"カウンター4",en:"Counter 4",ru:"Стойка 4",hy:"Բար 4"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"counter-5", label:{ja:"カウンター5",en:"Counter 5",ru:"Стойка 5",hy:"Բար 5"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"counter-6", label:{ja:"カウンター6",en:"Counter 6",ru:"Стойка 6",hy:"Բար 6"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"counter-7", label:{ja:"カウンター7",en:"Counter 7",ru:"Стойка 7",hy:"Բար 7"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-x-1", label:{ja:"テーブルX-1",en:"Table X-1",ru:"Стол X-1",hy:"Սեղան X-1"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-x-2", label:{ja:"テーブルX-2",en:"Table X-2",ru:"Стол X-2",hy:"Սեղան X-2"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-x-3", label:{ja:"テーブルX-3",en:"Table X-3",ru:"Стол X-3",hy:"Սեղան X-3"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-x-4", label:{ja:"テーブルX-4",en:"Table X-4",ru:"Стол X-4",hy:"Սեղան X-4"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-y-1", label:{ja:"テーブルY-1",en:"Table Y-1",ru:"Стол Y-1",hy:"Սեղան Y-1"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-y-2", label:{ja:"テーブルY-2",en:"Table Y-2",ru:"Стол Y-2",hy:"Սեղան Y-2"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-y-3", label:{ja:"テーブルY-3",en:"Table Y-3",ru:"Стол Y-3",hy:"Սեղան Y-3"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+    {id:"table-y-4", label:{ja:"テーブルY-4",en:"Table Y-4",ru:"Стол Y-4",hy:"Սեղան Y-4"}, sub:{ja:"1名席",en:"1 seat",ru:"1 место",hy:"1 տեղ"}},
+  ],
+  menu: [
+    {id:"shoyu", cat:"ramen", type:"configurator",
+      name:{ja:"醤油ラーメン", en:"Shoyu Ramen", ru:"Сёю рамен", hy:"Շոյու ռամեն"},
+      desc:{ja:"鶏だし6時間・東京スタイルの醤油ラーメン。", en:"Tokyo-style shoyu ramen, chicken broth simmered 6 hours.", ru:"Токийский рамен сёю, куриный бульон томится 6 часов.", hy:"Տոկիոյի ոճով շոյու ռամեն, հավի արգանակը եփվում է 6 ժամ։"},
+      note:{ja:"ハラール・魚介不使用・ニンニク抜きはご要望欄でお知らせください", en:"Halal / no-fish / no-garlic — please note it in the request field", ru:"Халяль / без рыбы / без чеснока — укажите в комментарии", hy:"Հալալ / առանց ձկան / առանց սխտորի — նշեք մեկնաբանության դաշտում"},
+      variants:[
+        {id:"std", label:{ja:"並",en:"Standard",ru:"Стандарт",hy:"Ստանդարտ"}, price:4500},
+        {id:"mega", label:{ja:"メガ（2倍盛り）",en:"Mega (double)",ru:"Мега (двойная)",hy:"Մեգա (կրկնակի)"}, price:8800}
+      ]},
+    {id:"miso", cat:"ramen", type:"configurator",
+      name:{ja:"味噌ラーメン", en:"Miso Ramen", ru:"Мисо рамен", hy:"Միսո ռամեն"},
+      desc:{ja:"鶏だしの味噌ラーメン。", en:"Miso ramen with chicken broth.", ru:"Мисо рамен на курином бульоне.", hy:"Միսո ռամեն հավի արգանակով։"},
+      note:{ja:"ハラール対応はご要望欄でお知らせください", en:"Halal available — please note it in the request field", ru:"Халяль — укажите в комментарии", hy:"Հալալ — նշեք մեկնաբանության դաշտում"},
+      variants:[
+        {id:"std", label:{ja:"並",en:"Standard",ru:"Стандарт",hy:"Ստանդարտ"}, price:4500},
+        {id:"mega", label:{ja:"メガ（2倍盛り）",en:"Mega (double)",ru:"Мега (двойная)",hy:"Մեգա (կրկնակի)"}, price:8800}
+      ]},
+    {id:"tonkotsu", cat:"ramen", type:"configurator", hasSpicy:false,
+      name:{ja:"とんこつラーメン", en:"Tonkotsu Ramen", ru:"Тонкоцу рамен", hy:"Տոնկոցու ռամեն"},
+      desc:{ja:"3日間炊いた豚骨スープの博多風とんこつラーメン。", en:"Hakata-style tonkotsu ramen, pork bone broth simmered 3 days.", ru:"Тонкоцу рамен в стиле Хаката, свиной бульон варится 3 дня.", hy:"Հակատայի ոճով տոնկոցու ռամեն, խոզի ոսկորի արգանակը եփվում է 3 օր։"},
+      note:{ja:"ニンニク抜きはご要望欄でお知らせください", en:"No-garlic — please note it in the request field", ru:"Без чеснока — укажите в комментарии", hy:"Առանց սխտորի — նշեք մեկնաբանության դաշտում"},
+      variants:[
+        {id:"std", label:{ja:"並",en:"Standard",ru:"Стандарт",hy:"Ստանդարտ"}, price:4500},
+        {id:"mega", label:{ja:"メガ（2倍盛り）",en:"Mega (double)",ru:"Мега (двойная)",hy:"Մեգա (կրկնակի)"}, price:8800}
+      ]},
+    {id:"veggie-tantan", cat:"ramen", type:"size",
+      name:{ja:"野菜担々麺", en:"Veggie Tantan Men", ru:"Овощной тантан-мен", hy:"Բուսակերային թանթան մեն"},
+      desc:{ja:"辛味大豆ミート＆卵トッピングの担々麺。ハラール対応。", en:"Tantan men topped with spicy soy meat & egg. Halal.", ru:"Тантан-мен с острым соевым мясом и яйцом. Халяль.", hy:"Թանթան մեն՝ կծու սոյայի մսով և ձվով։ Հալալ։"},
+      variants:[
+        {id:"std", label:{ja:"並",en:"Standard",ru:"Стандарт",hy:"Ստանդարտ"}, price:4500},
+        {id:"mega", label:{ja:"メガ（2倍盛り）",en:"Mega (double)",ru:"Мега (двойная)",hy:"Մեգա (կրկնակի)"}, price:8800}
+      ]},
+    {id:"vegan-tantan", cat:"ramen", type:"size",
+      name:{ja:"ヴィーガン担々麺", en:"Vegan Tantan Men", ru:"Веганский тантан-мен", hy:"Վեգան թանթան մեն"},
+      desc:{ja:"辛味大豆ミートトッピングの担々麺（卵不使用）。", en:"Tantan men topped with spicy soy meat (no egg).", ru:"Тантан-мен с острым соевым мясом (без яйца).", hy:"Թանթան մեն՝ կծու սոյայի մսով (առանց ձվի)։"},
+      variants:[
+        {id:"std", label:{ja:"並",en:"Standard",ru:"Стандарт",hy:"Ստանդարտ"}, price:4500},
+        {id:"mega", label:{ja:"メガ（2倍盛り）",en:"Mega (double)",ru:"Мега (двойная)",hy:"Մեգա (կրկնակի)"}, price:8800}
+      ]},
+    {id:"top-spicy", cat:"topping", type:"simple",
+      name:{ja:"辛味だれ", en:"Spicy sauce", ru:"Острый соус", hy:"Կծու սոուս"},
+      variants:[{id:"std", label:null, price:500}]},
+    {id:"top-egg", cat:"topping", type:"simple",
+      name:{ja:"味玉（半分）追加", en:"Extra half egg", ru:"Доп. яйцо (половина)", hy:"Լրացուցիչ ձու (կես)"},
+      variants:[{id:"std", label:null, price:500}]},
+    {id:"top-chashu", cat:"topping", type:"simple",
+      name:{ja:"チャーシュー増し（+100%）", en:"Extra chashu (+100%)", ru:"Доп. чашу (+100%)", hy:"Լրացուցիչ շաշու (+100%)"},
+      variants:[{id:"std", label:null, price:1500}]},
+    {id:"top-nori", cat:"topping", type:"simple",
+      name:{ja:"海苔", en:"Nori (dry seaweed)", ru:"Нори (водоросли)", hy:"Նորի (չորացրած ջրիմուռ)"},
+      variants:[{id:"std", label:null, price:500}]},
+    {id:"top-aedama", cat:"topping", type:"simple",
+      name:{ja:"替え玉（調味料付き）", en:"Aedama – extra noodles", ru:"Айдама – доп. лапша", hy:"Այեդամա՝ լրացուցիչ արիշտա"},
+      variants:[{id:"std", label:null, price:2000}]},
+    {id:"matcha-icecream", cat:"dessert", type:"simple",
+      name:{ja:"抹茶アイスクリーム", en:"Matcha ice cream", ru:"Мороженое матча", hy:"Մաչա պաղպաղակ"},
+      variants:[{id:"std", label:null, price:2000}]},
+    {id:"tea-pot", cat:"drink", type:"size",
+      name:{ja:"ティーポット", en:"Tea Pot", ru:"Чайник", hy:"Թեյնիկ"},
+      desc:{ja:"煎茶またはジャスミン烏龍茶からお選びください。", en:"Choose sencha or jasmine oolong tea.", ru:"На выбор: сенча или жасминовый улун.", hy:"Ընտրեք սենչա կամ յասամանի ուլունգ թեյ։"},
+      variants:[
+        {id:"sencha", label:{ja:"煎茶",en:"Sencha",ru:"Сенча",hy:"Սենչա"}, price:1600},
+        {id:"jasmine", label:{ja:"ジャスミン烏龍茶",en:"Jasmine oolong tea",ru:"Жасминовый улун",hy:"Յասամանի ուլունգ թեյ"}, price:1600}
+      ]},
+    {id:"fruit-juice", cat:"drink", type:"size",
+      name:{ja:"フルーツジュース", en:"Fruit Juice", ru:"Фруктовый сок", hy:"Մրգային հյութ"},
+      variants:[
+        {id:"apple", label:{ja:"りんご",en:"Apple",ru:"Яблоко",hy:"Խնձոր"}, price:700},
+        {id:"orange", label:{ja:"オレンジ",en:"Orange",ru:"Апельсин",hy:"Նարինջ"}, price:700}
+      ]},
+    {id:"beer", cat:"drink", type:"size",
+      name:{ja:"ビール", en:"Beer", ru:"Пиво", hy:"Գարեջուր"},
+      variants:[
+        {id:"asahi", label:{ja:"アサヒ",en:"Asahi",ru:"Асахи",hy:"Ասահի"}, price:1600},
+        {id:"dargett", label:{ja:"ダルゲット",en:"Dargett",ru:"Даргетт",hy:"Դարգեթ"}, price:1600}
+      ]},
+    {id:"sake", cat:"drink", type:"size",
+      name:{ja:"日本酒（獺祭）", en:"Sake (Dassai)", ru:"Саке (Dassai)", hy:"Սակե (Dassai)"},
+      variants:[
+        {id:"shot", label:{ja:"ショット（40ml）",en:"Shot (40ml)",ru:"Шот (40мл)",hy:"Շոթ (40մլ)"}, price:2500},
+        {id:"bottle", label:{ja:"ボトル（200ml）",en:"Bottle (200ml)",ru:"Бутылка (200мл)",hy:"Շիշ (200մլ)"}, price:10000}
+      ]},
+  ],
+};
+const CATLABELS = {
+  ramen:{ja:"ラーメン",en:"Ramen",ru:"Рамен",hy:"Ռամեն"},
+  topping:{ja:"トッピング",en:"Toppings",ru:"Топпинги",hy:"Հավելումներ"},
+  dessert:{ja:"デザート",en:"Dessert",ru:"Десерт",hy:"Աղանդեր"},
+  drink:{ja:"ドリンク",en:"Drinks",ru:"Напитки",hy:"Խմիչքներ"},
+};
+const CATEGORIES = [...new Set(CONFIG.menu.map(m=>m.cat))];
+
+const UI = {
+  ja:{eyebrow:"QR ORDER SYSTEM", chooseSeat:"席を選択してください",
+      qrNote:"座席のQRコードを読み取った場合、この画面は表示されず自動的に席が選択されます。",
+      menuHeading:"ご注文メニュー", addBtn:"追加する", cartReviewBtn:"注文内容を確認",
+      reviewTitleBase:"ご注文内容", total:"合計", submit:"この内容で注文する", backToMenu:"メニューに戻る",
+      empty:"カートは空です。", notesLabel:"ご要望・アレルギー（任意）",
+      notesPlaceholder:"例：ハラール対応、ニンニク抜き など",
+      thanksLine:"ご注文ありがとうございます。下の番号でお呼びする場合があります。",
+      orderMore:"追加で注文する", payNote:"お会計はカウンターにて承ります。",
+      loadError:"注文情報を読み込めませんでした。スタッフにお声がけください。",
+      sizeLabel:"サイズ", chashuLabel:"チャーシュー", porkChashu:"豚（デフォルト）", chickenChashu:"鶏（無料）",
+      porkChashuShort:"豚", chickenChashuShort:"鶏", groundPorkShort:"味付き豚挽肉",
+      spiceLabel:"辛さ", normalSpice:"通常", spicySpice:"スパイシー",
+      spicyMeatNote:"スパイシーの場合、チャーシューの代わりに味付き豚挽肉になります（鶏は選べません）"},
+  en:{eyebrow:"QR ORDER SYSTEM", chooseSeat:"Please select your seat",
+      qrNote:"Scanning a table's own QR code skips this screen and selects the seat automatically.",
+      menuHeading:"Order menu", addBtn:"Add", cartReviewBtn:"Review order",
+      reviewTitleBase:"Your order", total:"Total", submit:"Place order", backToMenu:"Back to menu",
+      empty:"Your cart is empty.", notesLabel:"Requests / allergies (optional)",
+      notesPlaceholder:"e.g. halal, no garlic",
+      thanksLine:"Thank you for your order. We may call out the number below.",
+      orderMore:"Add more items", payNote:"Please pay at the counter.",
+      loadError:"Could not load your order. Please ask staff for help.",
+      sizeLabel:"Size", chashuLabel:"Chashu", porkChashu:"Pork (default)", chickenChashu:"Chicken (free)",
+      porkChashuShort:"Pork", chickenChashuShort:"Chicken", groundPorkShort:"Seasoned ground pork",
+      spiceLabel:"Spice", normalSpice:"Regular", spicySpice:"Spicy",
+      spicyMeatNote:"When spicy, chashu is replaced with seasoned ground pork (chicken is not available)"},
+  ru:{eyebrow:"QR ORDER SYSTEM", chooseSeat:"Пожалуйста, выберите место",
+      qrNote:"Сканирование QR-кода столика выбирает место автоматически — этот экран не появится.",
+      menuHeading:"Меню заказа", addBtn:"Добавить", cartReviewBtn:"Просмотреть заказ",
+      reviewTitleBase:"Ваш заказ", total:"Итого", submit:"Оформить заказ", backToMenu:"Назад к меню",
+      empty:"Корзина пуста.", notesLabel:"Пожелания / аллергии (необязательно)",
+      notesPlaceholder:"напр.: халяль, без чеснока",
+      thanksLine:"Спасибо за заказ! Возможно, вас позовут по этому номеру.",
+      orderMore:"Добавить ещё", payNote:"Оплата производится на кассе.",
+      loadError:"Не удалось загрузить заказ. Обратитесь к персоналу.",
+      sizeLabel:"Размер", chashuLabel:"Тясю (мясо)", porkChashu:"Свинина (по умолчанию)", chickenChashu:"Курица (бесплатно)",
+      porkChashuShort:"Свинина", chickenChashuShort:"Курица", groundPorkShort:"Приправленный фарш",
+      spiceLabel:"Острота", normalSpice:"Обычный", spicySpice:"Острый",
+      spicyMeatNote:"В остром варианте чашу заменяется приправленным свиным фаршем (курица недоступна)"},
+  hy:{eyebrow:"QR ORDER SYSTEM", chooseSeat:"Խնդրում ենք ընտրել նստատեղը",
+      qrNote:"Սեղանի QR կոդը սկանավորելիս այս էկրանը չի հայտնվում, և տեղն ընտրվում է ավտոմատ։",
+      menuHeading:"Պատվերի ճաշացանկ", addBtn:"Ավելացնել", cartReviewBtn:"Դիտել պատվերը",
+      reviewTitleBase:"Ձեր պատվերը", total:"Ընդամենը", submit:"Պատվիրել", backToMenu:"Վերադառնալ ճաշացանկ",
+      empty:"Զամբյուղը դատարկ է։", notesLabel:"Ցանկություններ / ալերգիաներ (ոչ պարտադիր)",
+      notesPlaceholder:"օր.՝ հալալ, առանց սխտորի",
+      thanksLine:"Շնորհակալություն պատվերի համար։ Հնարավոր է կանչենք այս համարը։",
+      orderMore:"Ավելացնել պատվեր", payNote:"Վճարումն իրականացվում է դրամարկղում։",
+      loadError:"Չհաջողվեց բեռնել պատվերը։ Դիմեք անձնակազմին։",
+      sizeLabel:"Չափս", chashuLabel:"Շաշու", porkChashu:"Խոզի միս (հիմնական)", chickenChashu:"Հավ (անվճար)",
+      porkChashuShort:"Խոզի միս", chickenChashuShort:"Հավ", groundPorkShort:"Համեմված աղացած միս",
+      spiceLabel:"Կծվություն", normalSpice:"Սովորական", spicySpice:"Կծու",
+      spicyMeatNote:"Կծուի դեպքում շաշուի փոխարեն կլինի համեմված աղացած խոզի միս (հավը հասանելի չէ)"},
+};
+const STATUS = {
+  ja:{new:"新規受付",cooking:"調理中",served:"提供済み"},
+  en:{new:"Received",cooking:"Preparing",served:"Served"},
+  ru:{new:"Принято",cooking:"Готовится",served:"Подано"},
+  hy:{new:"Ընդունված",cooking:"Պատրաստվում է",served:"Մատուցված"},
+};
+
+/* =========================================================
+   サーバーAPI（Cloudflare Pages Functions + KV）
+   ========================================================= */
+async function fetchOrdersState(){
+  try{
+    const res = await fetch('/api/orders', {cache:'no-store'});
+    if(res.ok) return await res.json();
+  }catch(e){ console.error('Load error', e); }
+  return {seq:0, orders:[]};
+}
+
+/* =========================================================
+   完全分離：URLで客側/スタッフ側を判定
+   客側: 通常のリンク（?table=... でその席に自動着席）
+   スタッフ側: リンク末尾に #staff を付けて開く
+   ========================================================= */
+const appMode = (window.location.hash === '#staff') ? 'staff' : 'customer';
+const urlTable = new URLSearchParams(window.location.search).get('table');
+
+let lang = 'ja';
+let selectedTable = (urlTable && CONFIG.seats.some(s=>s.id===urlTable)) ? urlTable : null;
+let cart = {}; // "itemId::variantId::protein::spice" -> qty
+let selections = {}; // itemId -> {variant, protein, spice, qty}  (configurator working state)
+let activeCategory = CATEGORIES[0];
+let sheetOpen = false;
+let orderNotes = '';
+let myOrderId = null;
+let pollTimer = null;
+let busy = false;
+
+const root = document.getElementById('app');
+
+function t(key){ return (UI[lang] && UI[lang][key]) || (UI.ja && UI.ja[key]) || key; }
+function tm(obj){ if(!obj) return ''; return obj[lang] || obj.ja || obj.en || ''; }
+
+function makeKey(itemId, variantId, protein, spice){ return [itemId, variantId, protein||'-', spice||'-'].join('::'); }
+function parseKey(key){
+  const parts = key.split('::');
+  return {itemId:parts[0], variantId:parts[1], protein:parts[2], spice:parts[3]};
+}
+function findLine(key){
+  const {itemId, variantId} = parseKey(key);
+  const item = CONFIG.menu.find(m=>m.id===itemId);
+  if(!item) return null;
+  const variant = item.variants.find(v=>v.id===variantId);
+  if(!variant) return null;
+  return {item, variant};
+}
+function getSelection(item){
+  if(!selections[item.id]){
+    selections[item.id] = {variant:item.variants[0].id, protein:'pork', spice:'normal', qty:1};
+  }
+  return selections[item.id];
+}
+function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
+function cartTotal(){
+  return Object.entries(cart).reduce((sum,[key,qty])=>{
+    const fv = findLine(key);
+    return sum + (fv ? fv.variant.price*qty : 0);
+  },0);
+}
+function cartBarText(){
+  const n = cartCount(), total = cartTotal();
+  const unit = lang==='ja'?'点':lang==='en'?'items':lang==='ru'?'поз.':'միավոր';
+  return `🧾 ${n} ${unit} ・ ${total} ${CONFIG.currency}`;
+}
+function seatLabel(id){
+  const s = CONFIG.seats.find(s=>s.id===id);
+  return s ? tm(s.label) : id;
+}
+function fmtElapsed(ts){
+  const mins = Math.max(0, Math.floor((Date.now()-ts)/60000));
+  if(mins<1) return "今";
+  return mins+"分経過";
+}
+function fmtDuration(ms){
+  const mins = Math.max(0, Math.round(ms/60000));
+  if(mins<1) return "1分未満";
+  return mins+"分";
+}
+
+/* =========================================================
+   描画：客側
+   ========================================================= */
+function render(){
+  if(appMode==='staff') renderStaffApp(); else renderCustomerApp();
+}
+
+function renderCustomerApp(){
+  root.innerHTML = `
+    <header class="topbar">
+      <div class="eyebrow">${t('eyebrow')}</div>
+      <div class="shopname">${tm(CONFIG.shopName)}</div>
+      <div class="city-tag">${tm(CONFIG.city)}</div>
+      <div class="lang-switch">
+        <button class="lang-btn ${lang==='ja'?'active':''}" data-lang="ja">日本語</button>
+        <button class="lang-btn ${lang==='en'?'active':''}" data-lang="en">EN</button>
+        <button class="lang-btn ${lang==='ru'?'active':''}" data-lang="ru">RU</button>
+        <button class="lang-btn ${lang==='hy'?'active':''}" data-lang="hy">ՀԱՅ</button>
+      </div>
+    </header>
+    <main id="main"></main>
+  `;
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    b.onclick = ()=>{ lang = b.dataset.lang; renderCustomerApp(); };
+  });
+  const main = document.getElementById('main');
+  if(myOrderId){ renderConfirmation(main); }
+  else if(!selectedTable){ renderSeatPicker(main); }
+  else { renderMenu(main); }
+}
+
+function renderSeatPicker(main){
+  main.innerHTML = `
+    <div class="section-title">${t('chooseSeat')}</div>
+    <div class="seat-grid">
+      ${CONFIG.seats.map(s=>`
+        <button class="seat-btn" data-id="${s.id}">
+          ${tm(s.label)}
+          <span class="seat-sub">${tm(s.sub)}</span>
+        </button>
+      `).join('')}
+    </div>
+    <p class="help-text" style="margin-top:18px;">${t('qrNote')}</p>
+  `;
+  main.querySelectorAll('.seat-btn').forEach(btn=>{
+    btn.onclick = ()=>{ selectedTable = btn.dataset.id; renderCustomerApp(); };
+  });
+}
+
+function renderMenu(main){
+  main.innerHTML = `
+    <div class="section-title">${seatLabel(selectedTable)} ・ ${t('menuHeading')}</div>
+    <div class="cat-tabs">
+      ${CATEGORIES.map(c=>`<button class="cat-tab ${c===activeCategory?'active':''}" data-cat="${c}">${tm(CATLABELS[c])}</button>`).join('')}
+    </div>
+    <div id="menu-list"></div>
+  `;
+  renderMenuListOnly();
+  main.querySelectorAll('.cat-tab').forEach(btn=>{
+    btn.onclick = ()=>{ activeCategory = btn.dataset.cat; renderMenuListOnly(); attachCatTabActive(btn); };
+  });
+  renderCartBar();
+}
+function attachCatTabActive(activeBtn){
+  document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
+  activeBtn.classList.add('active');
+}
+function renderMenuListOnly(){
+  const list = document.getElementById('menu-list');
+  const items = CONFIG.menu.filter(m=>m.cat===activeCategory);
+  list.innerHTML = items.map(renderMenuItem).join('');
+  attachMenuItemHandlers(document.getElementById('main'));
+}
+function renderMenuItem(m){
+  if(m.type==='configurator') return renderConfiguratorItem(m);
+  if(m.type==='size') return renderSizeItem(m);
+  return renderSimpleItem(m);
+}
+function renderSimpleItem(m){
+  const v = m.variants[0];
+  const key = makeKey(m.id, v.id, '-', '-');
+  const qty = cart[key]||0;
+  return `
+    <div class="menu-item">
+      <div class="menu-item-row">
+        <span class="menu-item-name">${tm(m.name)}</span>
+        <span class="leader"></span>
+        <span class="menu-item-price">${v.price} ${CONFIG.currency}</span>
+      </div>
+      ${m.desc?`<div class="menu-item-desc">${tm(m.desc)}</div>`:''}
+      <div class="qty-row">
+        <span></span>
+        ${qty>0?`
+          <div class="qty-stepper">
+            <button data-act="dec" data-key="${key}">−</button>
+            <span class="qty-val">${qty}</span>
+            <button data-act="inc" data-key="${key}">＋</button>
+          </div>
+        `:`<button class="add-btn" data-act="inc" data-key="${key}">${t('addBtn')}</button>`}
+      </div>
+    </div>
+  `;
+}
+function renderSizeItem(m){
+  return `
+    <div class="menu-item">
+      <div class="menu-item-name" style="font-size:15.5px;">${tm(m.name)}</div>
+      ${m.desc?`<div class="menu-item-desc">${tm(m.desc)}</div>`:''}
+      <div class="variant-list">
+        ${m.variants.map(v=>{
+          const key = makeKey(m.id, v.id, '-', '-');
+          const qty = cart[key]||0;
+          return `
+            <div class="variant-row">
+              <span class="variant-label">${tm(v.label)}</span>
+              <span class="variant-price">${v.price} ${CONFIG.currency}</span>
+              ${qty>0?`
+                <div class="qty-stepper">
+                  <button data-act="dec" data-key="${key}">−</button>
+                  <span class="qty-val">${qty}</span>
+                  <button data-act="inc" data-key="${key}">＋</button>
+                </div>
+              `:`<button class="add-btn small" data-act="inc" data-key="${key}">${t('addBtn')}</button>`}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+function renderConfiguratorItem(m){
+  const sel = getSelection(m);
+  const hasSpicy = m.hasSpicy !== false;
+  const itemLines = Object.entries(cart).filter(([k])=>parseKey(k).itemId===m.id);
+  const chashuBlock = (hasSpicy && sel.spice==='spicy') ? `
+    <div class="config-group">
+      <div class="config-label">${t('chashuLabel')}</div>
+      <div class="pill-row"><span class="pill active" style="cursor:default;">${t('groundPorkShort')}</span></div>
+      <div class="config-hint">${t('spicyMeatNote')}</div>
+    </div>
+  ` : `
+    <div class="config-group">
+      <div class="config-label">${t('chashuLabel')}</div>
+      <div class="pill-row">
+        <button class="pill ${sel.protein==='pork'?'active':''}" data-field="protein" data-value="pork" data-item="${m.id}">${t('porkChashu')}</button>
+        <button class="pill ${sel.protein==='chicken'?'active':''}" data-field="protein" data-value="chicken" data-item="${m.id}">${t('chickenChashu')}</button>
+      </div>
+    </div>
+  `;
+  return `
+    <div class="menu-item">
+      <div class="menu-item-name" style="font-size:15.5px;">${tm(m.name)}</div>
+      ${m.desc?`<div class="menu-item-desc">${tm(m.desc)}</div>`:''}
+      ${m.note?`<div class="menu-item-note">${tm(m.note)}</div>`:''}
+
+      <div class="config-group">
+        <div class="config-label">${t('sizeLabel')}</div>
+        <div class="pill-row">
+          ${m.variants.map(v=>`<button class="pill ${sel.variant===v.id?'active':''}" data-field="variant" data-value="${v.id}" data-item="${m.id}">${tm(v.label)} ・ ${v.price} ${CONFIG.currency}</button>`).join('')}
+        </div>
+      </div>
+
+      ${hasSpicy?`
+      <div class="config-group">
+        <div class="config-label">${t('spiceLabel')}</div>
+        <div class="pill-row">
+          <button class="pill ${sel.spice==='normal'?'active':''}" data-field="spice" data-value="normal" data-item="${m.id}">${t('normalSpice')}</button>
+          <button class="pill ${sel.spice==='spicy'?'active':''}" data-field="spice" data-value="spicy" data-item="${m.id}">${t('spicySpice')}</button>
+        </div>
+      </div>
+      `:''}
+
+      ${chashuBlock}
+
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button data-act="cfg-dec" data-item="${m.id}">−</button>
+          <span class="qty-val">${sel.qty}</span>
+          <button data-act="cfg-inc" data-item="${m.id}">＋</button>
+        </div>
+        <button class="add-btn" data-act="cfg-add" data-item="${m.id}">${t('addBtn')}</button>
+      </div>
+
+      ${itemLines.length?`
+        <div class="added-lines">
+          ${itemLines.map(([key,qty])=>{
+            const {variantId,protein,spice} = parseKey(key);
+            const variant = m.variants.find(v=>v.id===variantId);
+            const proteinTxt = protein==='chicken'? t('chickenChashuShort') : protein==='ground'? t('groundPorkShort') : t('porkChashuShort');
+            const spiceTxt = spice==='spicy'? t('spicySpice') : t('normalSpice');
+            return `
+              <div class="added-line">
+                <span class="al-desc">${tm(variant.label)} ・ ${proteinTxt} ・ ${spiceTxt}</span>
+                <div class="qty-stepper small">
+                  <button data-act="dec" data-key="${key}">−</button>
+                  <span class="qty-val">${qty}</span>
+                  <button data-act="inc" data-key="${key}">＋</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `:''}
+    </div>
+  `;
+}
+function attachMenuItemHandlers(main){
+  main.querySelectorAll('[data-act="inc"],[data-act="dec"]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      if(btn.dataset.act==='inc'){ cart[key]=(cart[key]||0)+1; }
+      else{ cart[key]=Math.max(0,(cart[key]||0)-1); if(cart[key]===0) delete cart[key]; }
+      renderMenuListOnly();
+      renderCartBar();
+      if(sheetOpen) renderReviewSheet();
+    };
+  });
+  main.querySelectorAll('.pill[data-field]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const item = CONFIG.menu.find(m=>m.id===btn.dataset.item);
+      const sel = getSelection(item);
+      sel[btn.dataset.field] = btn.dataset.value;
+      if(btn.dataset.field==='spice'){
+        sel.protein = (btn.dataset.value==='spicy') ? 'ground' : 'pork';
+      }
+      renderMenuListOnly();
+    };
+  });
+  main.querySelectorAll('[data-act="cfg-inc"]').forEach(btn=>{
+    btn.onclick = ()=>{ const item=CONFIG.menu.find(m=>m.id===btn.dataset.item); getSelection(item).qty++; renderMenuListOnly(); };
+  });
+  main.querySelectorAll('[data-act="cfg-dec"]').forEach(btn=>{
+    btn.onclick = ()=>{ const item=CONFIG.menu.find(m=>m.id===btn.dataset.item); const sel=getSelection(item); sel.qty=Math.max(1,sel.qty-1); renderMenuListOnly(); };
+  });
+  main.querySelectorAll('[data-act="cfg-add"]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const item = CONFIG.menu.find(m=>m.id===btn.dataset.item);
+      const sel = getSelection(item);
+      const key = makeKey(item.id, sel.variant, sel.protein, sel.spice);
+      cart[key] = (cart[key]||0) + sel.qty;
+      sel.qty = 1;
+      renderMenuListOnly();
+      renderCartBar();
+      if(sheetOpen) renderReviewSheet();
+    };
+  });
+}
+
+function renderCartBar(){
+  let bar = document.getElementById('cart-bar');
+  if(bar) bar.remove();
+  if(cartCount()===0) return;
+  const div = document.createElement('div');
+  div.id = 'cart-bar';
+  div.className = 'cart-bar';
+  div.innerHTML = `
+    <span class="cart-info">${cartBarText()}</span>
+    <button id="open-review">${t('cartReviewBtn')}</button>
+  `;
+  document.getElementById('app').appendChild(div);
+  document.getElementById('open-review').onclick = ()=>{ sheetOpen=true; renderReviewSheet(); };
+}
+
+function renderReviewSheet(){
+  let overlay = document.getElementById('sheet-overlay');
+  if(overlay) overlay.remove();
+  if(!sheetOpen) return;
+  const entries = Object.entries(cart);
+  overlay = document.createElement('div');
+  overlay.id = 'sheet-overlay';
+  overlay.className = 'sheet-overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h2>${t('reviewTitleBase')} (${seatLabel(selectedTable)})</h2>
+      ${entries.length===0?`<p class="help-text">${t('empty')}</p>`:entries.map(([key,qty])=>{
+        const fv = findLine(key);
+        if(!fv) return '';
+        const {item,variant} = fv;
+        const {protein,spice} = parseKey(key);
+        const extra = [];
+        if(variant.label) extra.push(tm(variant.label));
+        if(protein && protein!=='-') extra.push(protein==='chicken'? t('chickenChashuShort') : protein==='ground'? t('groundPorkShort') : t('porkChashuShort'));
+        if(spice && spice!=='-') extra.push(spice==='spicy'? t('spicySpice') : t('normalSpice'));
+        const label = extra.length? ` (${extra.join(' ・ ')})` : '';
+        return `
+          <div class="review-row">
+            <div>
+              <div class="ri-name">${tm(item.name)}${label}</div>
+              <div class="ri-meta">${variant.price} ${CONFIG.currency} × ${qty}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="ri-price">${variant.price*qty} ${CONFIG.currency}</span>
+              <button class="remove-x" data-key="${key}">×</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      <textarea id="order-notes" class="notes-input" placeholder="${t('notesPlaceholder')}">${orderNotes}</textarea>
+      <div class="total-row">
+        <span class="label">${t('total')}</span>
+        <span class="value">${cartTotal()} ${CONFIG.currency}</span>
+      </div>
+      <button class="submit-btn" id="submit-order" ${entries.length===0?'disabled style="opacity:0.4;"':''}>${t('submit')}</button>
+      <button class="close-sheet" id="close-sheet">${t('backToMenu')}</button>
+    </div>
+  `;
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelectorAll('.remove-x').forEach(btn=>{
+    btn.onclick = ()=>{ delete cart[btn.dataset.key]; renderReviewSheet(); renderMenuListOnly(); renderCartBar(); };
+  });
+  const notesEl = document.getElementById('order-notes');
+  if(notesEl){ notesEl.oninput = ()=>{ orderNotes = notesEl.value; }; }
+  document.getElementById('close-sheet').onclick = ()=>{ sheetOpen=false; renderReviewSheet(); };
+  const submitBtn = document.getElementById('submit-order');
+  if(submitBtn && entries.length>0){ submitBtn.onclick = submitOrder; }
+  overlay.onclick = (e)=>{ if(e.target===overlay){ sheetOpen=false; renderReviewSheet(); } };
+}
+
+async function submitOrder(){
+  if(busy) return;
+  busy = true;
+  const btn = document.getElementById('submit-order');
+  const notesEl = document.getElementById('order-notes');
+  if(notesEl) orderNotes = notesEl.value.trim();
+  if(btn){ btn.disabled=true; btn.textContent='…'; }
+  try{
+    const items = Object.entries(cart).map(([key,qty])=>{
+      const fv = findLine(key);
+      const {protein,spice} = parseKey(key);
+      return {
+        name: fv.item.name.ja,
+        variantLabel: fv.variant.label ? fv.variant.label.ja : null,
+        proteinLabel: (protein && protein!=='-') ? (protein==='chicken'?'鶏':protein==='ground'?'味付き豚挽肉':'豚') : null,
+        spiceLabel: (spice && spice!=='-') ? (spice==='spicy'?'スパイシー':'通常') : null,
+        price: fv.variant.price,
+        qty
+      };
+    });
+    const res = await fetch('/api/orders', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ table:selectedTable, items, notes:orderNotes, total:cartTotal() })
+    });
+    if(!res.ok) throw new Error('Request failed: '+res.status);
+    const order = await res.json();
+    myOrderId = order.id;
+    cart = {};
+    selections = {};
+    orderNotes = '';
+    sheetOpen = false;
+    renderCustomerApp();
+    pollTimer = setInterval(renderConfirmationLive, 4000);
+  }catch(e){
+    console.error(e);
+    if(btn){ btn.disabled=false; btn.textContent=t('submit'); }
+    alert('Error / エラー');
+  }
+  busy = false;
+}
+
+async function renderConfirmation(main){
+  const state = await fetchOrdersState();
+  const order = state.orders.find(o=>o.id===myOrderId);
+  main.innerHTML = confirmationHtml(order);
+  bindConfirmationButtons();
+}
+async function renderConfirmationLive(){
+  if(!myOrderId) return;
+  const state = await fetchOrdersState();
+  const order = state.orders.find(o=>o.id===myOrderId);
+  const main = document.getElementById('main');
+  if(main){ main.innerHTML = confirmationHtml(order); bindConfirmationButtons(); }
+}
+function confirmationHtml(order){
+  if(!order){ return `<div class="empty-state">${t('loadError')}</div>`; }
+  const stampClass = order.status==='new'?'s-new':order.status==='cooking'?'s-cooking':'s-served';
+  const stampLabel = (STATUS[lang]&&STATUS[lang][order.status]) || STATUS.ja[order.status];
+  return `
+    <div class="confirm-wrap">
+      <p class="help-text">${t('thanksLine')}</p>
+      <div class="ticket-card">
+        <div class="ticket-number">#${String(order.id).padStart(3,'0')}</div>
+        <div class="ticket-table">${seatLabel(order.table)}</div>
+        <div class="stamp ${stampClass}">${stampLabel}</div>
+        <div class="perforation"></div>
+      </div>
+      <button class="secondary-btn" id="order-more">${t('orderMore')}</button>
+      <p class="pay-note">${t('payNote')}</p>
+    </div>
+  `;
+}
+function bindConfirmationButtons(){
+  const btn = document.getElementById('order-more');
+  if(btn){
+    btn.onclick = ()=>{
+      myOrderId = null;
+      clearInterval(pollTimer);
+      pollTimer = null;
+      renderCustomerApp();
+    };
+  }
+}
+
+/* =========================================================
+   描画：スタッフ側（完全に別アプリ。 #staff でのみ到達）
+   ========================================================= */
+function renderStaffApp(){
+  root.innerHTML = `
+    <header class="topbar">
+      <div class="eyebrow">STAFF DISPLAY</div>
+      <div class="shopname">${tm(CONFIG.shopName)}</div>
+      <div class="city-tag">厨房・カウンター専用画面</div>
+    </header>
+    <main id="main"></main>
+  `;
+  const main = document.getElementById('main');
+  renderStaff(main);
+  if(!pollTimer){ pollTimer = setInterval(renderStaffLive, 4000); }
+}
+async function renderStaff(main){
+  main.innerHTML = `<div class="empty-state">読み込み中…</div>`;
+  const state = await fetchOrdersState();
+  main.innerHTML = staffHtml(state);
+  bindStaffButtons();
+}
+async function renderStaffLive(){
+  const state = await fetchOrdersState();
+  const main = document.getElementById('main');
+  if(main){ main.innerHTML = staffHtml(state); bindStaffButtons(); }
+}
+function staffHtml(state){
+  const active = state.orders.filter(o=>!o.archived).sort((a,b)=>a.createdAt-b.createdAt);
+  const nNew = active.filter(o=>o.status==='new').length;
+  const nCooking = active.filter(o=>o.status==='cooking').length;
+  const nServed = active.filter(o=>o.status==='served').length;
+  const nUnpaid = active.filter(o=>!o.paid).length;
+  return `
+    <div class="staff-tools">
+      <div class="section-title" style="margin:0;">注文チケット</div>
+      <button class="ghost-btn" id="reset-demo">全注文をクリア</button>
+    </div>
+    <div class="staff-summary">
+      <div class="chip"><div class="chip-n">${nNew}</div><div class="chip-l">新規</div></div>
+      <div class="chip"><div class="chip-n">${nCooking}</div><div class="chip-l">調理中</div></div>
+      <div class="chip"><div class="chip-n">${nServed}</div><div class="chip-l">提供済み</div></div>
+      <div class="chip"><div class="chip-n">${nUnpaid}</div><div class="chip-l">未会計</div></div>
+    </div>
+    ${active.length===0?`<div class="empty-state">現在、進行中の注文はありません。<br>お客様画面から注文すると、ここに表示されます。</div>`:
+      active.map(orderTicketHtml).join('')}
+  `;
+}
+function orderTicketHtml(o){
+  const cookClass = o.status==='new'?'s-new':o.status==='cooking'?'s-cooking':'s-served';
+  const cookLabel = o.status==='new'?'新規受付':o.status==='cooking'?'調理中':'提供済み';
+  const cookNextStatus = o.status==='new'?'cooking':o.status==='cooking'?'served':'';
+  const cookNextLabel = o.status==='new'?'調理開始':o.status==='cooking'?'提供完了にする':'';
+  const canComplete = (o.status==='served' && o.paid);
+  const timeDisplay = (o.status==='served' && o.servedAt)
+    ? `提供まで ${fmtDuration(o.servedAt - o.createdAt)}`
+    : fmtElapsed(o.createdAt);
+  return `
+    <div class="order-ticket">
+      <div class="ot-head">
+        <div>
+          <div class="ot-num">#${String(o.id).padStart(3,'0')}</div>
+          <div class="ot-table">${seatLabel(o.table)}</div>
+        </div>
+        <div class="ot-elapsed">${timeDisplay}</div>
+      </div>
+      <div class="ot-stamps">
+        <span class="stamp ${cookClass}" style="font-size:11px;padding:2px 8px;">${cookLabel}</span>
+        <span class="stamp ${o.paid?'s-served':'s-new'}" style="font-size:11px;padding:2px 8px;">${o.paid?'会計済み':'未会計'}</span>
+      </div>
+      <div class="ot-items">
+        ${o.items.map(it=>{
+          const parts = [it.name];
+          if(it.variantLabel) parts.push(it.variantLabel);
+          if(it.proteinLabel) parts.push(it.proteinLabel);
+          if(it.spiceLabel) parts.push(it.spiceLabel);
+          return `<div class="ot-item-row"><span class="it-qty">×${it.qty}</span><span class="it-desc">${parts.join('・')}</span><span>${it.price*it.qty} ${CONFIG.currency}</span></div>`;
+        }).join('')}
+      </div>
+      ${o.notes?`<div class="ot-notes">📝 ${o.notes}</div>`:''}
+      <div class="ot-actions">
+        ${cookNextLabel?`<button class="advance-btn ${o.status==='cooking'?'ready':''}" data-act="cook" data-id="${o.id}" data-next="${cookNextStatus}">${cookNextLabel}</button>`:'<span></span>'}
+        <button class="advance-btn ${o.paid?'outline':'pay-due'}" data-act="pay" data-id="${o.id}" data-next="${o.paid?'0':'1'}">${o.paid?'未会計に戻す':'会計済みにする'}</button>
+      </div>
+      ${canComplete?`<div class="ot-actions"><button class="advance-btn ready" data-act="complete" data-id="${o.id}">完了として一覧から外す</button></div>`:''}
+      <div class="ot-actions"><button class="cancel-btn" data-act="cancel" data-id="${o.id}">取消</button></div>
+    </div>
+  `;
+}
+function bindStaffButtons(){
+  document.querySelectorAll('[data-act="cook"]').forEach(btn=>{
+    btn.onclick = ()=>updateOrder(parseInt(btn.dataset.id), {status: btn.dataset.next});
+  });
+  document.querySelectorAll('[data-act="pay"]').forEach(btn=>{
+    btn.onclick = ()=>updateOrder(parseInt(btn.dataset.id), {paid: btn.dataset.next==='1'});
+  });
+  document.querySelectorAll('[data-act="complete"]').forEach(btn=>{
+    btn.onclick = ()=>updateOrder(parseInt(btn.dataset.id), {archived:true});
+  });
+  document.querySelectorAll('[data-act="cancel"]').forEach(btn=>{
+    btn.onclick = ()=>cancelOrder(parseInt(btn.dataset.id));
+  });
+  const resetBtn = document.getElementById('reset-demo');
+  if(resetBtn){ resetBtn.onclick = resetAllOrders; }
+}
+async function updateOrder(id, patch){
+  try{
+    await fetch('/api/orders', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, ...patch})});
+  }catch(e){ console.error(e); }
+  renderStaffLive();
+}
+async function cancelOrder(id){
+  if(!confirm('この注文を取り消しますか？')) return;
+  await updateOrder(id, {archived:true});
+}
+async function resetAllOrders(){
+  if(!confirm('すべての注文データを削除します。よろしいですか？（元に戻せません）')) return;
+  try{
+    await fetch('/api/orders', {method:'DELETE'});
+  }catch(e){ console.error(e); }
+  renderStaffLive();
+}
+
+render();
+</script>
+</body>
+</html>
