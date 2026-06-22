@@ -49,12 +49,13 @@ async function handleOrdersApi(request, env) {
     const order = {
       id: state.seq,
       table: body.table,
-      items: body.items,
+      items: body.items,    // {itemId, variantId, protein, spice, price, qty} の配列（言語非依存）
       notes: body.notes || "",
       total: body.total || 0,
-      status: "new",       // new -> cooking -> served（調理の進み具合）
-      paid: false,         // 会計は調理状況とは独立して管理
-      servedAt: null,      // 提供完了になった時刻（提供までの時間の計測用）
+      status: "new",         // new -> cooking -> served（調理の進み具合）
+      paid: false,           // 会計は調理状況とは独立して管理
+      servedAt: null,        // 提供完了になった時刻（提供までの時間の計測用）
+      paidAt: null,          // 会計済みになった時刻（会計までの時間の計測用）
       archived: false,
       createdAt: Date.now(),
     };
@@ -85,7 +86,11 @@ async function handleOrdersApi(request, env) {
         order.servedAt = Date.now();
       }
     }
-    if (typeof body.paid === "boolean") order.paid = body.paid;
+    if (typeof body.paid === "boolean") {
+      order.paid = body.paid;
+      if (body.paid && !order.paidAt) order.paidAt = Date.now();
+      if (!body.paid) order.paidAt = null; // 取り消したら次回正しく計測できるようリセット
+    }
     if (typeof body.archived === "boolean") order.archived = body.archived;
     await saveState(env, state);
     return json(order);
